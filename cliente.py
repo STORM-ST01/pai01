@@ -1,10 +1,15 @@
 import tkinter as tk
 from tkinter import messagebox
 import socket
+import hashlib
+import hmac
+import json
 
 # Configuración del cliente
 HOST = '127.0.0.1'
 PORT = 3030
+SECRET_KEY = b'3f9a6c5e8d4b2a71c0fd34819e7f56a3b2c5d8e9a0f1347d6e8b9c2d1f0a3b4c'
+
 
 # Función para enviar datos al servidor
 def send_request(command, *args):
@@ -13,6 +18,10 @@ def send_request(command, *args):
         s.send(f"{command},{','.join(args)}".encode())
         response = s.recv(1024).decode()
     return response
+
+# Función para generar MAC
+def generate_mac(message):
+    return hmac.new(SECRET_KEY, message.encode(), hashlib.sha256).hexdigest()
 
 # Función de registro
 def register_user():
@@ -58,7 +67,15 @@ def show_transaction_screen(username):
         destination = entry_destination.get()
         amount = entry_amount.get()
         if origin and destination and amount:
-            response = send_request("TRANSFER", origin, destination, amount)
+            nonce = hashlib.sha256().encode().hexdigest()
+            message = json.dumps({
+                "origin": origin,
+                "destination": destination,
+                "amount": amount,
+                "nonce": nonce
+            })
+            mac = generate_mac(message)
+            response = send_request("TRANSFER", origin, destination, amount, mac)
             messagebox.showinfo("Respuesta", response)
         else:
             messagebox.showwarning("Error", "Todos los campos son obligatorios.")

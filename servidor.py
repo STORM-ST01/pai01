@@ -14,7 +14,7 @@ from datetime import datetime
 # Configuración del servidor
 HOST = '127.0.0.1'
 PORT = 3030
-SECRET_KEY = b'supersecretkey'
+SECRET_KEY = b'3f9a6c5e8d4b2a71c0fd34819e7f56a3b2c5d8e9a0f1347d6e8b9c2d1f0a3b4c'
 
 # Base de datos SQLite
 conn = sqlite3.connect("pai1.db", check_same_thread=False)
@@ -29,17 +29,14 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
+
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS transactions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    origin TEXT NOT NULL,
-    destination TEXT NOT NULL,
-    amount REAL NOT NULL,
-    nonce TEXT UNIQUE,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS nonces (
+    nonce TEXT UNIQUE
 )
 """)
 conn.commit()
+
 
 # Función para hashear contraseñas
 def hash_password(password):
@@ -77,9 +74,9 @@ def handle_client(client_socket):
                 try:
                     cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
                     conn.commit()
-                    client_socket.send(b"Usuario registrado correctamente.")
+                    client_socket.send(b"Usuario registrado exitosamente.")
                 except sqlite3.IntegrityError:
-                    client_socket.send(b"Error: El usuario ya existe.")
+                    client_socket.send(b"Error: Usuario ya registrado.")
             else:
                 client_socket.send(b"Error: Datos incompletos para el registro.")
 
@@ -90,9 +87,9 @@ def handle_client(client_socket):
                 cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
                 user = cursor.fetchone()
                 if user and verify_password(password, user[0]):
-                    client_socket.send(b"Login exitoso.")
+                    client_socket.send("Inicio de sesión exitoso.".encode('utf-8'))
                 else:
-                    client_socket.send("Error: Credenciales inválidas.".encode('utf-8'))
+                    client_socket.send("Error: Inicio de sesión fallido.".encode('utf-8'))
             else:
                 client_socket.send(b"Error: Datos incompletos para el login.")
 
@@ -101,6 +98,7 @@ def handle_client(client_socket):
             destination = request.get("destination")
             amount = request.get("amount")
             nonce = request.get("nonce")
+            mac = request.get("mac")
 
             if origin and destination and amount and nonce:
                 # Verificar si el nonce ya existe para evitar ataques de repetición
@@ -115,7 +113,10 @@ def handle_client(client_socket):
                     "amount": amount,
                     "nonce": nonce
                 })
-                mac = generate_mac(message)
+                mac_gen = generate_mac(message)
+                if mac_gen != mac:
+                    client_socket.send("Error: MAC inválido.")
+                    return
 
                 cursor.execute("""
                     INSERT INTO transactions (origin, destination, amount, nonce)
