@@ -12,10 +12,11 @@ SECRET_KEY = b'3f9a6c5e8d4b2a71c0fd34819e7f56a3b2c5d8e9a0f1347d6e8b9c2d1f0a3b4c'
 
 
 # Función para enviar datos al servidor
-def send_request(command, *args):
+def send_request(command, **args):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((HOST, PORT))
-        s.send(f"{command},{','.join(args)}".encode())
+        data = json.dumps({"command": command, **args})
+        s.send(data.encode())
         response = s.recv(1024).decode()
     return response
 
@@ -28,8 +29,10 @@ def register_user():
     username = entry_username.get()
     password = entry_password.get()
     if username and password:
-        response = send_request("REGISTER", username, password)
+        response = send_request(command="register", username = username, password = password)
         messagebox.showinfo("Respuesta", response)
+        if "exitosamente" in response:
+            show_transaction_screen(username)
     else:
         messagebox.showwarning("Error", "Usuario y contraseña requeridos.")
 
@@ -38,7 +41,7 @@ def login_user():
     username = entry_username.get()
     password = entry_password.get()
     if username and password:
-        response = send_request("LOGIN", username, password)
+        response = send_request(command="login", username = username, password = password)
         messagebox.showinfo("Respuesta", response)
         if "exitoso" in response:
             show_transaction_screen(username)
@@ -67,20 +70,21 @@ def show_transaction_screen(username):
         destination = entry_destination.get()
         amount = entry_amount.get()
         if origin and destination and amount:
-            nonce = hashlib.sha256().encode().hexdigest()
+            nonce = hashlib.sha256().hexdigest()
             message = json.dumps({
-                "origin": origin,
-                "destination": destination,
-                "amount": amount,
-                "nonce": nonce
-            })
+                    "origin": origin,
+                    "destination": destination,
+                    "amount": amount,
+                    "nonce": nonce
+                })
             mac = generate_mac(message)
-            response = send_request("TRANSFER", origin, destination, amount, mac)
+            response = send_request("transfer", origin = origin,destination = destination, amount = amount, nonce = nonce,  mac = mac)
             messagebox.showinfo("Respuesta", response)
         else:
             messagebox.showwarning("Error", "Todos los campos son obligatorios.")
 
     tk.Button(root, text="Enviar Transacción", command=send_transaction).pack()
+    tk.Button(root, text="Cerrar Sesión", command=show_start_screen).pack()
 
 # Función para mostrar la pantalla de inicio
 def show_start_screen():

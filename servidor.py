@@ -4,7 +4,7 @@
 import socket
 import threading
 import sqlite3
-import bcrypt  # INSTALAR con pip
+import bcrypt
 import hmac
 import hashlib
 import os
@@ -64,7 +64,7 @@ def handle_client(client_socket):
             client_socket.send("Error: Formato JSON inválido.".encode('utf-8'))
             return
 
-        command = request.get("type")
+        command = request.get("command")
 
         if command == "register":
             username = request.get("username")
@@ -100,9 +100,17 @@ def handle_client(client_socket):
             nonce = request.get("nonce")
             mac = request.get("mac")
 
+            if not origin or not destination or not amount or not nonce or not mac:
+                client_socket.send(b"Error: Datos incompletos para la transferencia.")
+                return
+
+            if int(amount) < 0:
+                client_socket.send(b"Error: Monto negativo no permitido.")
+                return
+
             if origin and destination and amount and nonce:
                 # Verificar si el nonce ya existe para evitar ataques de repetición
-                cursor.execute("SELECT * FROM transactions WHERE nonce = ?", (nonce,))
+                cursor.execute("SELECT * FROM nonces WHERE nonce = ?", (nonce,))
                 if cursor.fetchone():
                     client_socket.send(b"Error: Nonce repetido. Transaccion rechazada.")
                     return
@@ -118,17 +126,12 @@ def handle_client(client_socket):
                     client_socket.send("Error: MAC inválido.")
                     return
 
-                cursor.execute("""
-                    INSERT INTO transactions (origin, destination, amount, nonce)
-                    VALUES (?, ?, ?, ?)
-                """, (origin, destination, float(amount), nonce))
-                conn.commit()
-                client_socket.send(json.dumps({"status": "success", "mac": mac}).encode())
+                client_socket.send(b"Transferencia realizada con integridad.")
             else:
                 client_socket.send("Error: Datos incompletos para la transacción.".encode('utf-8'))
 
         else:
-            client_socket.send(b"Error: Comando no reconocido.")
+            client_socket.send(f"Error: Comando no reconocido.{command}".encode('utf-8'))
 
     except Exception as e:
         print(f"Error: {e}")
