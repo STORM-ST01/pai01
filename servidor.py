@@ -109,12 +109,14 @@ def handle_client(client_socket):
                 return
 
             if origin and destination and amount and nonce:
+                
                 # Verificar si el nonce ya existe para evitar ataques de repetición
                 cursor.execute("SELECT * FROM nonces WHERE nonce = ?", (nonce,))
-                if cursor.fetchone():
+                if cursor.fetchone() == nonce:
                     client_socket.send(b"Error: Nonce repetido. Transaccion rechazada.")
                     return
-
+                cursor.execute("INSERT INTO nonces (nonce) VALUES (?)", (nonce,))
+                conn.commit()
                 message = json.dumps({
                     "origin": origin,
                     "destination": destination,
