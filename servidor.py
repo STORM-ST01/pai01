@@ -70,14 +70,14 @@ def handle_client(client_socket):
     try:
         data = client_socket.recv(1024).decode()
         if not data:
-            logging.warning("Se recibió un paquete vacío.")
+            logging.warning("Se recibió un paquete vacio.")
             return
 
         try:
             request = json.loads(data)
         except json.JSONDecodeError:
             send_json(client_socket, False, "Error: Formato JSON inválido.")
-            logging.error("JSON inválido recibido.")
+            logging.error("JSON invalido recibido.")
             return
 
         command = request.get("command")
@@ -122,7 +122,7 @@ def handle_client(client_socket):
                         if username in login_attempts:
                             del login_attempts[username]
                     send_json(client_socket, True, "Inicio de sesión exitoso.")
-                    logging.info(f"Usuario {username} inició sesión correctamente.")
+                    logging.info(f"Usuario {username} inicio sesion correctamente.")
                 else:
                     with login_attempts_lock:
                         if username in login_attempts:
@@ -135,7 +135,7 @@ def handle_client(client_socket):
                         else:
                             login_attempts[username] = (1, None)
                     send_json(client_socket, False, "Error: Inicio de sesión fallido.")
-                    logging.warning(f"Inicio de sesión fallido para {username}.")
+                    logging.warning(f"Inicio de sesion fallido para {username}.")
             else:
                 send_json(client_socket, False, "Error: Datos incompletos para el login.")
                 logging.error("Login fallido: datos incompletos.")
@@ -178,11 +178,11 @@ def handle_client(client_socket):
             if not hmac.compare_digest(mac_gen, mac):
                 elapsed = time.perf_counter() - start_time
                 send_json(client_socket, False, "Error: MAC inválido.")
-                logging.warning(f"MAC inválido. Tiempo comparación: {elapsed:.6f}s. MAC esperado: {mac_gen}, recibido: {mac}")
+                logging.warning(f"MAC invalido. Tiempo comparación: {elapsed:.6f}s. MAC esperado: {mac_gen}, recibido: {mac}")
                 return
             else:
                 elapsed = time.perf_counter() - start_time
-                logging.info(f"MAC verificado correctamente. Tiempo comparación: {elapsed:.6f}s.")
+                logging.info(f"MAC verificado correctamente. Tiempo comparacion: {elapsed:.6f}s.")
 
             send_json(client_socket, True, "Transferencia realizada con integridad.")
             logging.info(f"Transferencia de {amount} de {origin} a {destination} completada.")
@@ -206,7 +206,7 @@ print(f"[SERVIDOR] Escuchando en {HOST}:{PORT}")
 
 while True:
     client_socket, addr = server.accept()
-    logging.info(f"[NUEVA CONEXIÓN] Cliente conectado desde {addr}")
+    logging.info(f"[NUEVA CONEXION] Cliente conectado desde {addr}")
     print(f"[NUEVA CONEXIÓN] Cliente conectado desde {addr}")
     client_thread = threading.Thread(target=handle_client, args=(client_socket,))
     client_thread.start()
