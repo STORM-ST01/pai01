@@ -70,3 +70,4 @@ Se incluyen pruebas unitarias en la carpeta `tests` para verificar el correcto f
 
 1.  Asegúrate de tener el entorno virtual activado.
 2.  Ejecute los Script de test de peticiones para probar las medidas de seguridad.
+3.  En el archivo server.log se pueden ver los resultados de los test.
