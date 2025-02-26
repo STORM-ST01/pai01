@@ -13,7 +13,7 @@ Implementación de un sistema cliente servidor para transacciones bancarias simp
 1.  **Clonar el repositorio:**
 
     ```bash
-    git clone [https://github.com/STORM-ST01/pai01.git](https://github.com/STORM-ST01/pai01.git)
+    git clone https://github.com/STORM-ST01/pai01.git
     cd [nombre del repositorio]
     ```
 
