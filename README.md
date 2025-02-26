@@ -1,7 +1,7 @@
 
-# Nombre del Proyecto
+# PAI-01
 
-[Breve descripción del propósito de tu aplicación]
+Implementación de un sistema cliente servidor para transacciones bancarias simples, garantizando la integridad en el almacenamiento y transmisión de la información.
 
 ## Requisitos
 
